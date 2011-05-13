@@ -47,8 +47,12 @@ subprogram_body(proc_body(Name)) -->
 
 %-----------------------------------------------------------------------
 
-test1 :-
+:- begin_tests(nada).
+
+test(empty_procedure) :-
         phrase(subprogram_body(proc_body('X')),
                ['procedure', 'X', 'is',
                 'begin',
                 'end', 'X', ';']).
+
+end_tests(nada).
