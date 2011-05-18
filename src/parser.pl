@@ -2,7 +2,7 @@
   Part of nAda.
   Copyright (c) 2011 Jose Sebastian Reguera Candal.
 */
-:- module(nada, []).
+:- module(parser, []).
 
 parse(Tokens, AST) :-
         phrase(subprogram_body(AST), Tokens).
@@ -97,7 +97,7 @@ subprogram_body(proc_body(Name, Decls)) -->
 
 %-----------------------------------------------------------------------
 
-:- begin_tests(nada).
+:- begin_tests(parser).
 
 test(empty_procedure) :-
         phrase(subprogram_body(proc_body('X', [])),
@@ -115,4 +115,4 @@ test(procedure_with_declarations) :-
                 'begin',
                 'end', id('X'), ';']).
 
-end_tests(nada).
+:- end_tests(parser).
