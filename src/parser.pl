@@ -20,8 +20,8 @@ identifier(X) -->
 %-----------------------------------------------------------------------
 % 3.1 Declarations
 
-basic_declaration(Ctx0, Decl, Ctx) -->
-        object_declaration(Ctx0, Decl, Ctx).
+basic_declaration(Decl) -->
+        object_declaration(Decl).
 
 defining_identifier(Id) -->
         identifier(Id).
@@ -43,7 +43,7 @@ subtype_name(Subtype) -->
 
 % 3.3.1 Object Declarations
 
-object_declaration(Ctx0, decl(Ids, Subtype), Ctx0) -->
+object_declaration(decl(Ids, Subtype)) -->
         defining_identifier_list(Ids), [':'],
         subtype_indication(Subtype), [';'].
 
@@ -60,29 +60,28 @@ defining_identifier_list_rest([]) -->
 %-----------------------------------------------------------------------
 % 3.11 Declarative Parts
 
-declarative_part(Ctx0, [Decl|Decls], Ctx) -->
-        declarative_item(Ctx0, Decl, Ctx1), !, % TODO ! to avoid choice point, ok?
-        declarative_part(Ctx1, Decls, Ctx).
-declarative_part(Ctx, [], Ctx) -->
+declarative_part([Decl|Decls]) -->
+        declarative_item(Decl), !, % TODO ! to avoid choice point, ok?
+        declarative_part(Decls).
+declarative_part([]) -->
         [].
 
-declarative_item(Ctx0, Decl, Ctx) -->
-        basic_declarative_item(Ctx0, Decl, Ctx).
+declarative_item(Decl) -->
+        basic_declarative_item(Decl).
 
-basic_declarative_item(Ctx0, Decl, Ctx) -->
-        basic_declaration(Ctx0, Decl, Ctx).
+basic_declarative_item(Decl) -->
+        basic_declaration(Decl).
 
 %-----------------------------------------------------------------------
 % Section 6: Subprograms
 %-----------------------------------------------------------------------
 % 6.1 Subprogram Declarations
 
-subprogram_specification(Ctx0, Proc_Spec, Ctx) -->
-        procedure_specification(Ctx0, Proc_Spec, Ctx).
+subprogram_specification(Proc_Spec) -->
+        procedure_specification(Proc_Spec).
 
-procedure_specification(Ctx0, proc_spec(Name), Ctx) -->
-        ['procedure'], defining_program_unit_name(Name),
-        { put_symbol(Name, Ctx0, 'proc', Ctx) }.
+procedure_specification(proc_spec(Name)) -->
+        ['procedure'], defining_program_unit_name(Name).
 
 defining_program_unit_name(Name) -->
         defining_identifier(Name).
@@ -91,36 +90,15 @@ defining_program_unit_name(Name) -->
 % 6.3 Subprogram Bodies
 
 subprogram_body(proc_body(Name, Decls)) -->
-        { empty_context(Ctx0) },
-        subprogram_specification(Ctx0, proc_spec(Name), Ctx1),
+        subprogram_specification(proc_spec(Name)),
         ['is'],
-        declarative_part(Ctx1, Decls, Ctx2),
-        { print(Ctx2) },
+        declarative_part(Decls),
         ['begin'],
         ['end'], identifier(Name), [';'].        
 
 %-----------------------------------------------------------------------
 
-%% empty_context(Ctx).
-empty_context([]).
-
-%% put_symbol(+Name, +Ctx, +Type, -New_Ctx)
-put_symbol(Name, Ctx, Type, [Name-Type|Ctx]).
-
-%% get_symbol(+Name, +Ctx, -Type)
-get_symbol(Name, Ctx, Type) :-
-        memberchk(Name-Type, Ctx). 
-
-
-%-----------------------------------------------------------------------
-
 :- begin_tests(parser).
-
-test(context) :-
-        empty_context(Ctx0),
-        put_symbol(a, Ctx0, 1, Ctx1),
-        get_symbol(a, Ctx1, 1),
-        \+ get_symbol(a, Ctx0, _).
 
 test(empty_procedure) :-
         phrase(subprogram_body(proc_body('X', [])),

@@ -5,9 +5,11 @@
 :- module(nada, []).
 
 :- use_module(parser).
+:- use_module(sem).
 
 parse(Input, Output) :-
-        parser:parse(Input, Output).
+        parser:parse(Input, AST),
+        sem:transform(AST, Output).
 
 %-----------------------------------------------------------------------
 
@@ -20,7 +22,8 @@ test(procedure_with_declarations) :-
                 'begin',
                 'end', id('X'), ';'],
               proc_body('X',
-                        [decl(['a', 'b'], 'byte'),
-                         decl(['c'], 'word')])).
+                        [decl('a', 'byte'),
+                         decl('b', 'byte'),
+                         decl('c', 'word')])).
 
 :- end_tests(nada).
