@@ -81,7 +81,7 @@ subprogram_specification(Proc_Spec) -->
         procedure_specification(Proc_Spec).
 
 procedure_specification(proc_spec(Name)) -->
-        ['procedure'], defining_program_unit_name(Name).
+        ['PROCEDURE'], defining_program_unit_name(Name).
 
 defining_program_unit_name(Name) -->
         defining_identifier(Name).
@@ -91,10 +91,10 @@ defining_program_unit_name(Name) -->
 
 subprogram_body(proc_body(Name, Decls)) -->
         subprogram_specification(proc_spec(Name)),
-        ['is'],
+        ['IS'],
         declarative_part(Decls),
-        ['begin'],
-        ['end'], identifier(Name), [';'].        
+        ['BEGIN'],
+        ['END'], identifier(Name), [';'].        
 
 %-----------------------------------------------------------------------
 
@@ -102,18 +102,18 @@ subprogram_body(proc_body(Name, Decls)) -->
 
 test(empty_procedure) :-
         phrase(subprogram_body(proc_body('X', [])),
-               ['procedure', id('X'), 'is',
-                'begin',
-                'end', id('X'), ';']).
+               ['PROCEDURE', id('X'), 'IS',
+                'BEGIN',
+                'END', id('X'), ';']).
 
 test(procedure_with_declarations) :-
         phrase(subprogram_body(proc_body('X',
                                          [decl(['a', 'b'], 'byte'),
                                           decl(['c'], 'word')])),
-               ['procedure', id('X'), 'is',
+               ['PROCEDURE', id('X'), 'IS',
                    id('a'), ',', id('b'), ':', id('byte'), ';',
                    id('c'), ':', id('word'), ';',
-                'begin',
-                'end', id('X'), ';']).
+                'BEGIN',
+                'END', id('X'), ';']).
 
 :- end_tests(parser).

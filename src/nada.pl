@@ -4,11 +4,13 @@
 */
 :- module(nada, []).
 
+:- use_module(lexer).
 :- use_module(parser).
 :- use_module(sem).
 
 parse(Input, Output) :-
-        parser:parse(Input, AST),
+        lexer:scan(Input, Tokens),
+        parser:parse(Tokens, AST),
         sem:transform(AST, Output).
 
 %-----------------------------------------------------------------------
@@ -16,14 +18,15 @@ parse(Input, Output) :-
 :- begin_tests(nada).
 
 test(procedure_with_declarations) :-
-        parse(['procedure', id('X'), 'is',
-                   id('a'), ',', id('b'), ':', id('byte'), ';',
-                   id('c'), ':', id('word'), ';',
-                'begin',
-                'end', id('X'), ';'],
+        parse("procedure X is
+                 a, b : byte;
+                 c : word;
+               begin
+               end X;
+              ",
               proc_body('X',
-                        [decl('a', 'byte'),
-                         decl('b', 'byte'),
-                         decl('c', 'word')])).
+                        [decl('A', 'BYTE'),
+                         decl('B', 'BYTE'),
+                         decl('C', 'WORD')])).
 
 :- end_tests(nada).
