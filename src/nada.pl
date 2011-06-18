@@ -28,12 +28,12 @@ compile_file(Input_File, Output_File) :-
 :- begin_tests(nada).
 
 test(procedure_with_declarations) :-
-        parse("procedure X is
-                 a, b : byte;
-                 c : word;
-               begin
-               end X;
-              ",
-             [0xC9]).
+        compile("procedure X is
+                   a, b : byte;
+                   c : word;
+                 begin
+                 end X;
+                ",
+               [0xC9]).
 
 :- end_tests(nada).
