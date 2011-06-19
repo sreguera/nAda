@@ -5,7 +5,7 @@
 :- module(parser, []).
 
 parse(Tokens, AST) :-
-        phrase(subprogram_body(AST), Tokens).
+        phrase(compilation(AST), Tokens).
 
 %-----------------------------------------------------------------------
 % Section 2: Lexical Elements
@@ -43,7 +43,7 @@ subtype_name(Subtype) -->
 
 % 3.3.1 Object Declarations
 
-object_declaration(decl(Ids, Subtype)) -->
+object_declaration(decl(Ids, object, Subtype)) -->
         defining_identifier_list(Ids), [':'],
         subtype_indication(Subtype), [';'].
 
@@ -97,6 +97,25 @@ subprogram_body(proc_body(Name, Decls)) -->
         ['END'], identifier(Name), [';'].        
 
 %-----------------------------------------------------------------------
+% Section 10: Program Structure and Compilation Issues
+%-----------------------------------------------------------------------
+% 10.1 Separate Compilation
+
+% 10.1.1 Compilation Units - Library Units
+
+compilation(C) -->
+        compilation_unit(C).
+
+compilation_unit(U) -->
+        library_item(U).
+
+library_item(I) -->
+        library_unit_body(I).
+
+library_unit_body(B) -->
+        subprogram_body(B).
+
+%-----------------------------------------------------------------------
 
 :- begin_tests(parser).
 
@@ -108,11 +127,11 @@ test(empty_procedure) :-
 
 test(procedure_with_declarations) :-
         phrase(subprogram_body(proc_body('X',
-                                         [decl(['a', 'b'], 'byte'),
-                                          decl(['c'], 'word')])),
+                                         [decl(['A', 'B'], object, 'BYTE'),
+                                          decl(['C'], object, 'WORD')])),
                ['PROCEDURE', id('X'), 'IS',
-                   id('a'), ',', id('b'), ':', id('byte'), ';',
-                   id('c'), ':', id('word'), ';',
+                   id('A'), ',', id('B'), ':', id('BYTE'), ';',
+                   id('C'), ':', id('WORD'), ';',
                 'BEGIN',
                 'END', id('X'), ';']).
 
