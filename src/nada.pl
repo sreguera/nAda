@@ -34,6 +34,11 @@ test(procedure_with_declarations) :-
                  begin
                  end X;
                 ",
-               [0xC9]).
+               [0xDD, 0xE5,
+                0xDD, 0x21, 0x00, 0x00,
+                0xDD, 0x39,
+                0xDD, 0xF9,
+                0xDD, 0xE1,
+                0xC9]).
 
 :- end_tests(nada).
