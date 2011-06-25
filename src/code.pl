@@ -4,16 +4,25 @@
 */
 :- module(code, []).
 
-transform(proc_body(Name, SemDecls),
-          [ push(ix),           % Save frame pointer
-            ld(ix, 0),          % Set new frame pointer: ld ix, sp
-            add(ix, sp),
-            %  sub(sp, size),   % TODO Reserve space for locals 
-            %                   % TODO do stuff
-            ld(sp, ix),         % Free space for local variables
-            pop(ix),            % Restore frame pointer
-            ret
-          ]).                   % Return
+
+transform(AST, Asm) :-
+        transform(AST, Asm, []).
+
+transform(proc_body(_Name, _SemDecls)) -->
+        prolog,
+        epilog.
+
+prolog -->
+        [ push(ix),             % Save frame pointer
+          ld(ix, 0),            % Set new frame pointer: ld ix, sp
+          add(ix, sp)
+        ].
+
+epilog -->
+        [ ld(sp, ix),           % Free space for local variables
+          pop(ix),              % Restore frame pointer
+          ret                   % Return
+        ].
 
 %-----------------------------------------------------------------------
 
