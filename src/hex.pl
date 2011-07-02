@@ -4,50 +4,111 @@
 */
 :- module(hex, []).
 
-hex(Data, Address, Hex) :-
-        split2(Data, 16, Fragments),
-        hex_loop(Fragments, Address, Records0),
-        end_record(E),
-        append(Records0, [E], Records1),
-        append(Records1, Hex).
 
-hex_loop([], _, []).
-hex_loop([F|Fs], A0, [R, [0'\n]|Rs]) :- %'
-        data_record(A0, F, R),
-        A1 is A0 + 16,
-        hex_loop(Fs, A1, Rs).
+%% format(+Data, +Offset, -Contents)
+%
+% Format an hex object file Contents for Data starting at Offset.
 
-data_record(Address, Data, Record) :-
-        hex_record(Address, 0, Data, Record).
+format(Data, Offset, Contents) :-
+        record_length(Len),
+        chunk(Data, Len, Chunks),
+        format_loop(Chunks, Offset, Records),
+        end_of_file_record(EOF_Record),
+        flatten([Records|EOF_Record], Contents).
 
-end_record(E) :-
-        hex_record(0, 1, [], E).
+format_loop([], _, []).
+format_loop([Chunk|Chunks], Offset, [Record, 0'\n|Records]) :- %'
+        data_record(Offset, Chunk, Record),
+        length(Chunk, Len),
+        Offset1 is Offset + Len,
+        format_loop(Chunks, Offset1, Records).
 
-hex_record(Address, Type, Data, [0':|Codes]) :- %'
-        word_bytes(Address, AH, AL),
-        length(Data, Count),
-        checksum([Count, AH, AL, Type|Data], Checksum),
-        flatten([Count, AH, AL, Type, Data, Checksum], Bytes),
-        hexify(Bytes, Codes).
 
-word_bytes(Word, BH, BL) :-
-        BL is Word /\ 0xFF,
-        BH is (Word >> 8) /\ 0xFF.
-        
+%% record_length(Length)
+%
+% The record data length must be less than 255.
+
+record_length(16).
+
+
+%% data_record(+Offset, +Data, -Record)
+%
+% Record is a data record for Data starting at Offset.
+
+data_record(Offset, Data, Record) :-
+        record(Offset, 0, Data, Record).
+
+
+%% end_of_file_record(-Record)
+%
+% Record is the end of file record
+
+end_of_file_record(Record) :-
+        record(0, 1, [], Record).
+
+
+%% record(+Offset, +Type, +Data, -Record)
+%
+% Record is the hex record with the given Offset, Type and Data.
+% Each record is of the form:
+%     :LLOOOOTTDD...DDCC
+% Where:
+% - L is the length of the data field
+% - O is the offset
+% - T is the record type
+% - D is the data
+% - C is the checksum
+
+record(Offset, Type, Data, [Mark|Codes]) :-
+        record_mark(Mark),
+        word_bytes(Offset, OH, OL),
+        length(Data, Len),
+        checksum([Len, OH, OL, Type|Data], Checksum),
+        flatten([Len, OH, OL, Type, Data, Checksum], Bytes),
+        list_hexes(Bytes, Codes).
+
+
+%% record_mark(Code)
+%
+% Character code that marks the beginning of an hex record.
+
+record_mark(0':). %'
+
+
+%% checksum(+Byte_List, -Checksum)
+%
+% Checksum is the least significant byte of the 2's complement of the sum
+% of the values in Byte_List.
+
 checksum(List, Checksum) :-
         sumlist(List, Sum),
         Checksum is (0x100 - (Sum /\ 0xFF)) /\ 0xFF.
 
-hexify([], []).
-hexify([B|Bs], [CH, CL|Cs]) :-
-        hex_byte(B, CH, CL),
-        hexify(Bs, Cs).
 
-hex_byte(B, CH, CL) :-
-        BH is (B >> 4) /\ 0xF,
-        hex_code(BH, CH),
-        BL is B /\ 0xF,
-        hex_code(BL, CL).
+%% list_hexes(+Byte_List, -Hex_List)
+%
+% Hex_List is a list of hexadecimal character codes corresponding to the
+% bytes in Byte_List.
+
+list_hexes([], []).
+list_hexes([B|Bs], [CH, CL|Cs]) :-
+        byte_hexes(B, CH, CL),
+        list_hexes(Bs, Cs).
+
+
+%% byte_hexes(+Byte, -High_Code, -Low_Code)
+%
+% Hexadecimal character codes for the nibbles in Byte.
+
+byte_hexes(B, CH, CL) :-
+        byte_nibbles(B, NH, NL),
+        hex_code(NH, CH),
+        hex_code(NL, CL).
+
+
+%% hex_code(Digit, Code)
+%
+% Code is the hexadecimal character code for Digit.
 
 hex_code(0x0, 0'0).
 hex_code(0x1, 0'1).
@@ -67,7 +128,24 @@ hex_code(0xE, 0'E).
 hex_code(0xF, 0'F).
 
 
-%% split(+List, +Pos, -Prefix, -Remainder)
+%% word_bytes(+Word, -High_Byte, -Low_Byte)
+
+word_bytes(Word, BH, BL) :-
+        BH is (Word >> 8) /\ 0xFF,
+        BL is Word /\ 0xFF.
+
+
+%% byte_nibbles(+Byte, -High_Nibble, -Low_Nibble)
+
+byte_nibbles(B, NH, NL) :-
+        NH is (B >> 4) /\ 0xF,
+        NL is B /\ 0xF.
+
+
+%% split(+List, +Position, -Prefix, -Remainder)
+%
+% Split List at Position, giving Prefix and Remainder.
+
 split([], _, [], []) :-
         !.
 split([X|Xs], Pos, [X|Ps], Rs) :-
@@ -78,10 +156,14 @@ split([X|Xs], Pos, [X|Ps], Rs) :-
 split(Xs, Pos, [], Xs) :-
         Pos =< 0.
 
-%% split2(+List, +Size, -Fragments)
-split2([], _, []) :-
+
+%% chunk(+List, +Size, -Chunks)
+%
+% Split List in chunks of length Size.
+
+chunk([], _, []) :-
         !.
-split2(List, Size, [Prefix|Fragments]) :-
+chunk(List, Size, [Prefix|Chunks]) :-
         Size > 0,               % TODO throw?
         split(List, Size, Prefix, Remainder),
-        split2(Remainder, Size, Fragments).
+        chunk(Remainder, Size, Chunks).
