@@ -1,1 +1,35 @@
-Nano-Ada
+                            ===  nAda  ===
+
+nAda stands for nano-Ada. nAda is a compiler for a subset of the Ada
+programming language targeted at the z80 processor, and in particular
+at the ZX Spectrum computer. nAda is written in Prolog.
+
+Current version
+---------------
+
+No version yet as it still does nothing.
+
+Documentation
+-------------
+
+Nothing yet.
+
+Installation
+------------
+
+Currently the project is just a set of files, so just load them in
+your Prolog environment and play with them.
+
+The current development environment is SWI-Prolog version 5.10.4. It
+is very likely that it also works in any other recent version of
+SWI-Prolog (i.e. > 5.6). You can get the SWI-Prolog environment at:
+
+http://www.swi-prolog.org/
+
+Other Prolog systems may or may not work. I don't go out of my way to
+keep it standard ISO Prolog.
+
+Licensing
+---------
+
+See the file called LICENSE in this directory.
