@@ -23,6 +23,16 @@ compile_file(Input_File, Output_File) :-
         compile(Input, Output),
         write_file_bytes(Output_File, Output).
 
+compile(Args) :-
+        Args = [Input_File],
+        compile_file(Input_File, 'a.out').
+
+run :-
+        current_prolog_flag(argv, Args),
+        append(_SysArgs, ['--'|AppArgs], Args),
+        !,
+        compile(AppArgs).        
+
 %-----------------------------------------------------------------------
 
 :- begin_tests(nada).
